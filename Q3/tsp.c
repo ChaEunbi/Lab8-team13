@@ -11,7 +11,7 @@ int path[17] ;
 int used[17] ;
 int length = 0 ;
 int min = -1 ;
-pid_t pid;
+pid_t pid[17];
 int k = 0;
 
 void _travel(int idx) {
@@ -56,9 +56,13 @@ void travel(int start) {
 
 void handler(int signum)
 {
+	int i;
 	if(signum == SIGINT){
-		kill(getpid(), SIGKILL);
-		exit(0);
+		for(i=0;i<17;i++)
+		{
+			if(pid[i] == 0)
+				exit(0);
+		}
 	}
 }
 
@@ -69,7 +73,7 @@ int main() {
 	int len;
 	char buf[32];
 	char fileName[32];
-	char result[32];
+	char result[64];
 
 	FILE * fp = fopen("gr17.tsp", "r") ;
 	FILE * fp2;
@@ -86,28 +90,29 @@ int main() {
 	signal(SIGINT, handler);
 
 	for (i = 0  ; i < 17 ; i++) {
-		if((pid = fork()) == 0)
+		if((pid[i] = fork()) == 0)
 			travel(i) ;
 			k++;
 	}
 	
-	waitpid(-1, &s, 0);
+	for(i=0;i<17;i++)
+		waitpid(pid[i], &s, 0);
 
 	for(i=0;i<17;i++)
 	{
-		sprintf(buf, "%d.sol", i);
+		sprintf(buf, "%d.sol", i); //buf에 0.sol~16.sol 저장
 		fp2 = fopen(buf, "r");
-		fscanf(fp2, "%d", &len);
+		fscanf(fp2, "%d", &len); //처음 length만 받아서 len에 넣고
 		fclose(fp2);
 		
-		if(min > len){
+		if(min > len){ //최소 len을 찾음
 			min = len;
 			strcpy(fileName, buf);
 		}
 	}
 
 	fp3 = fopen(fileName, "r");
-	fgets(result, 32, fp3);
+	fgets(result, 64, fp3);
 	fclose(fp3);
 	printf("%s\n", result);
 	return 0;
