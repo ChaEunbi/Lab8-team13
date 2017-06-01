@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-
+#include <string.h>
 
 int m[17][17] ;
 
@@ -11,19 +11,26 @@ int path[17] ;
 int used[17] ;
 int length = 0 ;
 int min = -1 ;
-pid_t pid[17];
+pid_t pid;
+int k = 0;
 
 void _travel(int idx) {
 	int i ;
-	FILE* fp=fopen("text","w");
+	char buf[32];
+	sprintf(buf, "%d.sol", k);
+	FILE* fp;
 
 	if (idx == 17) {
 		if (min == -1 || min > length) {
+			fp = fopen(buf, "w");
+
 			min = length ;
-			printf("%d (", length) ;
+			fprintf(fp, "%d (", length) ;
 			for (i = 0 ; i < 16 ; i++) 
-				printf("%d ", path[i]) ;
-			printf("%d)\n", path[16]) ;
+				fprintf(fp, "%d ", path[i]) ;
+			fprintf(fp, "%d)\n", path[16]) ;
+
+			fclose(fp);
 		}
 	}
 	else {
@@ -38,7 +45,6 @@ void _travel(int idx) {
 			}
 		}
 	}
-	fclose(fp);
 }
 
 void travel(int start) {
@@ -49,22 +55,25 @@ void travel(int start) {
 }
 
 void handler(int signum)
-{      
-        int i;
-        int s ;
-        for(i=0;i<17;i++)
-                kill(pid[i], SIGKILL);
-
-	for(i=0;i<17;i++)
-		waitpid(pid[i],&s,0);
-        printf("Bye.\n");
+{
+	if(signum == SIGINT){
+		kill(getpid(), SIGKILL);
+		exit(0);
+	}
 }
 
 int main() {
-
 	int i, j, t ;
 	int s;
+	int min = 10000;
+	int len;
+	char buf[32];
+	char fileName[32];
+	char result[32];
+
 	FILE * fp = fopen("gr17.tsp", "r") ;
+	FILE * fp2;
+	FILE * fp3;
 
 	for (i = 0 ; i < 17 ; i++) {
 		for (j = 0 ; j < 17 ; j++) {
@@ -73,16 +82,33 @@ int main() {
 		}
 	}
 	fclose(fp) ;
-	
-	signal(SIGINT,handler);
 
-	for (i = 0  ; i < 17 ; i++) 
-		if((pid[i]=fork())==0)	
-		{
-			travel(i);
-			exit(0);
-		}
+	signal(SIGINT, handler);
+
+	for (i = 0  ; i < 17 ; i++) {
+		if((pid = fork()) == 0)
+			travel(i) ;
+			k++;
+	}
+	
+	waitpid(-1, &s, 0);
 
 	for(i=0;i<17;i++)
-		waitpid(pid[i],&s,0);
+	{
+		sprintf(buf, "%d.sol", i);
+		fp2 = fopen(buf, "r");
+		fscanf(fp2, "%d", &len);
+		fclose(fp2);
+		
+		if(min > len){
+			min = len;
+			strcpy(fileName, buf);
+		}
+	}
+
+	fp3 = fopen(fileName, "r");
+	fgets(result, 32, fp3);
+	fclose(fp3);
+	printf("%s\n", result);
+	return 0;
 }
