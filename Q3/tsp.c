@@ -114,6 +114,6 @@ int main() {
 	fp3 = fopen(fileName, "r");
 	fgets(result, 64, fp3);
 	fclose(fp3);
-	printf("%s\n", result);
+	printf("\n%s", result);
 	return 0;
 }
